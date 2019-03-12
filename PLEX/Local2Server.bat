@@ -42,7 +42,7 @@ set server=%~2
 echo "started function :localPlexShows - %local%"
 call :logger "started function :localPlexShows - %local%"
 cd %local%
-rem ;*.aria2
+
 echo "looking for files in %local%"
 call :logger "looking for files in %local%"
 for /r %%f in (*.mp4;*.mkv;*.avi) do (
@@ -53,7 +53,6 @@ call :trim "!ret_val2!" seasonName
 
 echo "parsing %%f"
 call :logger "parsing %%f"
-rem check for aria2 before calling this function
 call :copyAndMoveFile "%server%\!folderName!\!seasonName!\", "%%f", "%localBackUp%", "!folderName!", "%%~nxf"
 
 )
@@ -77,7 +76,6 @@ call :logger "parsing %%f"
 
 call :stringContains !%%~nf!, (, result
 if "!result!"=="0" (
-rem if file name 
 CALL :getFolderMovieName "%%~nf", _folderName
 set folderName=!_folderName!
 ) else (
