@@ -2,7 +2,7 @@
 batch script to push files from local drive to nas server that runs plex/kodi with automatic folder creating and other features.
 
 this script reqires third party software called TinyMediaManager - https://www.tinymediamanager.org/
-to update the server with nfo files, images, etc. vs per device loading info from kodi. The info is thw same across all devices.
+to update the server with nfo files, images, etc. vs per device loading info from kodi. The info is the same across all devices.
 if tiny media is not needed for you...then comment out 'call :serverUpdate'
 
 Movies and TV shows have different naming conventions...so in order for the script to work on almost all tv shows.... this is the naming 
@@ -67,8 +67,8 @@ movieIndex=0 -> index of last movie(L/S); has to be the same number!
 ###
 notes: 
 
-tvL/S and movieL/S is for the default folders where everything is stored on locale and server
-do NOT use it declare specific tv/movie folders as will break the script!
+tvL/S and movieL/S is for the default folders where everything is stored on local and server
+do NOT use it declare every specific tv/movie folder as will break the script!
 
 ### Log.txt
 the script will create a log.txt and logged almost all the actions:
