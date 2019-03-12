@@ -27,10 +27,10 @@ for /l %%G in (0, 1, %movieIndex%) do (
 call :localPlexMovies !movieL[%%G]!, !movieS[%%G]!
 )
 
-cd %home%
 call :serverUpdate
 
-rem cmd /K
+cd %home%
+
 pause
 exit /b
 
@@ -47,13 +47,14 @@ echo "looking for files in %local%"
 call :logger "looking for files in %local%"
 for /r %%f in (*.mp4;*.mkv;*.avi) do (
 
-CALL :getFolderShowName %%~nxf, folderName
-CALL :getSeasonShowNumber %%~nxf, ret_val2
-call :trim "!ret_val2!" seasonName
+CALL :fileToFolderName "%%~nf", -, _resultFolderName
+CALL :getSeasonShowNumber "%%~nxf", ret_val2
+call :trim "!ret_val2!", _resultSeasonName
 
 echo "parsing %%f"
 call :logger "parsing %%f"
-call :copyAndMoveFile "%server%\!folderName!\!seasonName!\", "%%f", "%localBackUp%", "!folderName!", "%%~nxf"
+
+call :copyAndMoveFile "!server!\!_resultFolderName!\!_resultSeasonName!\", "%%f", "!localBackUp!", "!_resultFolderName!", "%%~nxf"
 
 )
 echo "finished in %local%"
@@ -74,16 +75,16 @@ for /r %%f in (*.mp4;*.mkv;*.avi) do (
 echo "parsing %%f"
 call :logger "parsing %%f"
 
-call :stringContains !%%~nf!, (, result
-if "!result!"=="0" (
-CALL :getFolderMovieName "%%~nf", _folderName
+call :stringContains "!%%~nf!", (, _stringResult
+if "!_stringResult!"=="0" (
+CALL :fileToFolderName "%%~nf", (, _folderName
 set folderName=!_folderName!
 ) else (
 call :trim "%%~nf", _folderName
 set folderName=!_folderName!
 )
-rem check for aria2 before calling this function
-call :copyAndMoveFile "%server%\!folderName!\", "%%f", "%localBackUp%", "!folderName!", "%%~nxf"
+
+call :copyAndMoveFile "!server!\!folderName!\", "%%f", "%localBackUp%", "!folderName!", "%%~nxf"
 )
 echo "finished in %local%"
 call :logger "finished in %local%"
@@ -99,17 +100,16 @@ set _localBackUpDir=%~3
 set _folderName=%~4
 set _fileName=%~5
 
-if not exist "%_serverDir%\" md "%_serverDir%\" && echo created '%_serverDir%' on PLEX server.  
-
-if exist "%_serverDir%%_fileName%" (
+if not exist "!_serverDir!\" md "!_serverDir!\" && echo created '!_serverDir!' on PLEX server.  
+if exist "!_serverDir!!_fileName!" (
 rem server
-call :moveFile "%_serverDir%%_fileName%", "%_localBackUpDir%\Server\%_folderName%\", "%_fileName%"
-call :copyFile "%_localDir%", "%_serverDir%", "%_fileName%"
-call :moveFile "%_localDir%", "%_localBackUpDir%\Local\%_folderName%\", "%_fileName%"
+call :moveFile "!_serverDir!%_fileName%", "%_localBackUpDir%\Server\!_folderName!", "!_fileName!"
+call :copyFile "!_localDir!", "!_serverDir!", "!_fileName!"
+call :moveFile "!_localDir!", "%_localBackUpDir%\Local\!_folderName!\", "!_fileName!"
 ) else (
 rem local
-call :copyFile "%_localDir%", "%_serverDir%", "%_fileName%"
-call :moveFile "%_localDir%", "%_localBackUpDir%\Local\%_folderName%\", "%_fileName%"
+call :copyFile "!_localDir!", "!_serverDir!", "!_fileName!"
+call :moveFile "!_localDir!", "%_localBackUpDir%\Local\!_folderName!", "!_fileName!"
 )
 EXIT /B 0
 
@@ -118,9 +118,9 @@ set _mLocalDir=%~1
 set _mServerDir=%~2
 set _mFileName=%~3
 
-Echo n|COPY /y "%_mLocalDir%" "%_mServerDir%%_mFileName%"
-echo "copied file from '%_mLocalDir%' to '%_mServerDir%%_mFileName%'"
-call :logger "copied file from '%_mLocalDir%' to '%_mServerDir%%_mFileName%'"
+Echo n|COPY /y "!_mLocalDir!" "!_mServerDir!!_mFileName!"
+echo "copied file from '!_mLocalDir!' to '!_mServerDir!!_mFileName!'"
+call :logger "copied file from '!_mLocalDir!' to '!_mServerDir!!_mFileName!'"
 EXIT /B 0
 
 :moveFile
@@ -128,19 +128,20 @@ set _mLocalDir=%~1
 set _mLocalBackUpDir=%~2
 set _mFileName=%~3
 
-if not exist "%_mLocalBackUpDir%" md "%_mLocalBackUpDir%"
-move "%_mLocalDir%" "%_mLocalBackUpDir%" && echo "moved from '%_mLocalDir%' to '%_mLocalBackUpDir%%_mFileName%'"
-call :logger "moved from '%_mLocalDir%' to '%_mLocalBackUpDir%%_mFileName%'"
+if not exist "!_mLocalBackUpDir!" md "!_mLocalBackUpDir!"
+move "!_mLocalDir!" "!_mLocalBackUpDir!" && echo "moved from '!_mLocalDir!' to '!_mLocalBackUpDir!!_mFileName!'"
+call :logger "moved from '!_mLocalDir!' to '!_mLocalBackUpDir!!_mFileName!'"
 EXIT /B 0
 
 rem output " The Rising of the Shield Hero - S01E001 " = "The Rising of the Shield Hero"
-:getFolderShowName
-set _name=%~1
-SET _endbit=%_name:*-=%
-CALL SET _result=%%_name:%_endbit%=%%
-SET _result2=%_result:-=%
-call :trim "%_result2%" folderNoSpaces
-SET %~2=!folderNoSpaces!
+:fileToFolderName
+set variable1=%~1
+set variable2=%~2
+for /f "tokens=1 delims=%variable2%" %%a in ("%variable1%") do (
+call :trim "%%a", _folderName
+SET %~3=!_folderName!
+)
+endlocal
 EXIT /B 0
 
 :stringContains
@@ -153,15 +154,6 @@ if not "x!variable1:%variable2%=!"=="x%variable1%" (
 )
 EXIT /B 0
 
-rem output " Aquaman (2018) " = "Aquaman"
-:getFolderMovieName
-set _name=%~1
-SET _endbit=%_name:*(=%
-CALL SET _result=%%_name:%_endbit%=%%
-SET _result2=%_result:(=%
-call :trim "%_result2%" folderNoSpaces
-SET %~2=!folderNoSpaces!
-EXIT /B 0
 
 rem output S01 = 1, S20 = 20, S00 = Specials
 :getSeasonShowNumber
@@ -174,7 +166,7 @@ IF %season:~0,1%==0 ( SET %~2=S%season:~1,1% ) ELSE ( SET %~2=S%season:~0,2% )
 EXIT /B 0
 
 rem output " The Rising of the Shield Hero " = "The Rising of the Shield Hero"
-setlocal enabledelayedexpansion
+
 :trim
 set input=%~1
 for /f "tokens=* delims= " %%a in ("%input%") do set input=%%a
