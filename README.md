@@ -78,7 +78,7 @@ movieIndex=0 -> index of last movie(L/S); has to be the same number!
 ###
 notes: 
 
-tvL/S and movieL/S is for the default folders where everything is stored on local and server
+tvL/S and movieL/S are for the default folders where everything is stored on local and server
 do NOT use it declare every specific tv/movie folder as will break the script!
 
 ### Log.txt
