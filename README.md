@@ -24,12 +24,14 @@ Movies
 OK:)
 
 file name.XXX
+
 file name (XXXX).XXX
 
 
 NOT ok - script/server will break
 
 file name - bla bla - bla bla (2018).XXX
+
 file name (XXXX) - bla - (bla bla).XXX
 
 
