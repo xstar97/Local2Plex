@@ -8,21 +8,30 @@ if tiny media is not needed for you...then comment out 'call :serverUpdate'
 Movies and TV shows have different naming conventions...so in order for the script to work on almost all tv shows.... this is the naming 
 scheme I use for all my Tv shows, Animes, and other 'animes'
 
-TV
-OK
+TV:
+
+OK:)
+
 file name - SXXEXXX.XXX
 
-NOT ok - script/server will break
+NOT ok:( - script/server will break
+
 file name - SXXEXXX - bla bla bla.XXX
 
+
 Movies
-OK
+
+OK:)
+
 file name.XXX
 file name (XXXX).XXX
 
+
 NOT ok - script/server will break
+
 file name - bla bla - bla bla (2018).XXX
 file name (XXXX) - bla - (bla bla).XXX
+
 
 Once the script has started it will lock itself so it can not be excuted again until it closes/fails.
 This is a safey mechanism to not cause file(s) corruption.
