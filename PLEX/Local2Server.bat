@@ -199,6 +199,11 @@ EXIT /B 0
 :config
 if exist %utilsDir%\%configName% (
 echo %configName% exists....
+>nul findstr "<" "%utilsDir%\%configName%" && (
+%utilsDir%\%configName%
+echo update the config file before continuing....
+pause
+)
 ) else (
 (
 echo title=Local2Server
