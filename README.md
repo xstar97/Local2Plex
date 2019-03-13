@@ -1,9 +1,9 @@
 # Local2Plex
 batch script to push files from local drive to nas server that runs plex/kodi with automatic folder creating and other features.
 
-this script reqires third party software called TinyMediaManager - https://www.tinymediamanager.org/
+this script optionally uses a third party software called TinyMediaManager - https://www.tinymediamanager.org/
 to update the server with nfo files, images, etc. vs per device loading info from kodi. The info is the same across all devices.
-if tiny media is not needed for you...then comment out 'call :serverUpdate'
+if tiny media is not needed for you...then just leave tmmDir="" blank.
 
 Movies and TV shows have different naming conventions...so in order for the script to work on almost all tv shows.... this is the naming 
 scheme I use for all my Tv shows, Animes, and other 'animes'
@@ -24,6 +24,9 @@ OK:)
 file name.XXX
 
 file name (XXXX).XXX
+
+
+NOT OK:(
 
 file name - bla bla - bla bla (2018).XXX
 
