@@ -1,16 +1,21 @@
+<- note sample info! ->
 title=Local2Server
 
-drive1="<c drive>"
-drive2="<d drive>"
+drive1=c:
+drive2=d:
 
-home="<home dir where this script is located>"
-tmmDir="<folder location of Tiny Media Manager>"
-localBackUp="<folder to moved copied files to>"
+home="D:\Downloads\PLEX"
+tmmDir="C:\Program Files (x86)\TMM"
+localBackUp="D:\Downloads\PLEX\BackUp"
 
-tvL[0]="<Local TV folder 1>"
-tvS[0]="<Server TV folder 1>"
-tvIndex="<TV index 0>"
+tvL[0]="D:\Downloads\PLEX\Animes"
+tvS[0]="P:\Animes"
+tvL[1]="D:\Downloads\PLEX\AnimesH"
+tvS[1]="P:\AnimesH"
+tvL[2]="D:\Downloads\PLEX\TV"
+tvS[2]="P:\TV"
+tvIndex=2
 
-movieL[0]="<Local Movie folder 1>"
-movieS[0]="<Server Movie folder 1>"
-movieIndex="<Movie index 0>"
+movieL[0]="D:\Downloads\PLEX\Movies"
+movieS[0]="P:\Movies"
+movieIndex=0
