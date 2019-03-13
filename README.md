@@ -14,21 +14,16 @@ OK:)
 
 file name - SXXEXXX.XXX
 
-NOT ok:( - script/server will break
-
 file name - SXXEXXX - bla bla bla.XXX
 
 
-Movies
+Movies:
 
 OK:)
 
 file name.XXX
 
 file name (XXXX).XXX
-
-
-NOT ok - script/server will break
 
 file name - bla bla - bla bla (2018).XXX
 
