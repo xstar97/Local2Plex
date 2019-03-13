@@ -9,6 +9,7 @@ call :getLock
 exit /b
 
 :main
+if not exist "%utilsDir%\" md "%utilsDir%\"
 call :initLogger
 call :config
 
@@ -18,16 +19,15 @@ TITLE %title%
 
 %drive2%
 
-
 for /l %%G in (0, 1, %tvIndex%) do (
-call :localPlexShows !tvL[%%G]!, !tvS[%%G]!
+call :localPlexTvShows !tvL[%%G]!, !tvS[%%G]!
 )
 
 for /l %%G in (0, 1, %movieIndex%) do (
 call :localPlexMovies !movieL[%%G]!, !movieS[%%G]!
 )
 
-call :serverUpdate
+call :tmmUpdate
 
 cd %home%
 
@@ -35,12 +35,12 @@ pause
 exit /b
 
 rem looks for any Shows on local storage and copies it over to the plex server.
-:localPlexShows
+:localPlexTvShows
 set local=%~1
 set server=%~2
 
-echo "started function :localPlexShows - %local%"
-call :logger "started function :localPlexShows - %local%"
+echo "started function :localPlexTvShows - %local%"
+call :logger "started function localPlexTvShows - %local%"
 cd %local%
 
 echo "looking for files in %local%"
@@ -54,7 +54,7 @@ call :trim "!ret_val2!", _resultSeasonName
 echo "parsing %%f"
 call :logger "parsing %%f"
 
-call :copyAndMoveFile "!server!\!_resultFolderName!\!_resultSeasonName!\", "%%f", "!localBackUp!", "!_resultFolderName!", "%%~nxf"
+call :copyAndMoveFile "!server!\!_resultFolderName!\!_resultSeasonName!", "%%f", "!localBackUp!", "!_resultFolderName!", "%%~nxf"
 
 )
 echo "finished in %local%"
@@ -75,7 +75,7 @@ for /r %%f in (*.mp4;*.mkv;*.avi) do (
 echo "parsing %%f"
 call :logger "parsing %%f"
 
-call :stringContains "!%%~nf!", (, _stringResult
+call :variableContains "%%~nf", (, _stringResult
 if "!_stringResult!"=="0" (
 CALL :fileToFolderName "%%~nf", (, _folderName
 set folderName=!_folderName!
@@ -84,7 +84,7 @@ call :trim "%%~nf", _folderName
 set folderName=!_folderName!
 )
 
-call :copyAndMoveFile "!server!\!folderName!\", "%%f", "%localBackUp%", "!folderName!", "%%~nxf"
+call :copyAndMoveFile "!server!\!folderName!", "%%f", "%localBackUp%", "!folderName!", "%%~nxf"
 )
 echo "finished in %local%"
 call :logger "finished in %local%"
@@ -101,55 +101,69 @@ set _folderName=%~4
 set _fileName=%~5
 
 if not exist "!_serverDir!\" md "!_serverDir!\" && echo created '!_serverDir!' on PLEX server.  
-if exist "!_serverDir!!_fileName!" (
+if exist "!_serverDir!\!_fileName!" (
 rem server
-call :moveFile "!_serverDir!%_fileName%", "%_localBackUpDir%\Server\!_folderName!", "!_fileName!"
-call :copyFile "!_localDir!", "!_serverDir!", "!_fileName!"
-call :moveFile "!_localDir!", "%_localBackUpDir%\Local\!_folderName!\", "!_fileName!"
-) else (
+echo "'!_fileName!' exists on '!_serverDir!\'"
+call :logger "'!_fileName!' exists on '!_serverDir!\'"
+call :moveFile "!_serverDir!\!_fileName!", "%_localBackUpDir%\Server\!_folderName!", "!_fileName!"
+)
 rem local
 call :copyFile "!_localDir!", "!_serverDir!", "!_fileName!"
 call :moveFile "!_localDir!", "%_localBackUpDir%\Local\!_folderName!", "!_fileName!"
-)
 EXIT /B 0
 
 :copyFile
-set _mLocalDir=%~1
-set _mServerDir=%~2
+set _mDirFileFrom=%~1
+set _mDirFileTo=%~2
 set _mFileName=%~3
 
-Echo n|COPY /y "!_mLocalDir!" "!_mServerDir!!_mFileName!"
-echo "copied file from '!_mLocalDir!' to '!_mServerDir!!_mFileName!'"
-call :logger "copied file from '!_mLocalDir!' to '!_mServerDir!!_mFileName!'"
+Echo n|COPY /z /v "!_mDirFileFrom!" "!_mDirFileTo!\!_mFileName!"
+IF %ERRORLEVEL% EQU 0 (
+echo "copied from '!_mDirFileFrom!' to '!_mDirFileTo!\!_mFileName!'"
+call :logger "copied from '!_mDirFileFrom!' to '!_mDirFileTo!\!_mFileName!'"
+) ELSE (
+echo "Failed to copy '!_mFileName!' to '!_mDirFileTo!\'"
+call :logger "Failed to copy '!_mFileName!' to '!_mDirFileTo!\'"
+)
 EXIT /B 0
 
 :moveFile
-set _mLocalDir=%~1
+set _mDirFileFrom=%~1
 set _mLocalBackUpDir=%~2
 set _mFileName=%~3
 
 if not exist "!_mLocalBackUpDir!" md "!_mLocalBackUpDir!"
-move "!_mLocalDir!" "!_mLocalBackUpDir!" && echo "moved from '!_mLocalDir!' to '!_mLocalBackUpDir!!_mFileName!'"
-call :logger "moved from '!_mLocalDir!' to '!_mLocalBackUpDir!!_mFileName!'"
+
+Echo n|COPY /z /v "!_mDirFileFrom!" "!_mLocalBackUpDir!"
+IF %ERRORLEVEL% EQU 0 (
+del "!_mDirFileFrom!"
+echo "moved from '!_mDirFileFrom!' to '!_mLocalBackUpDir!\!_mFileName!'"
+call :logger "moved from '!_mDirFileFrom!' to '!_mLocalBackUpDir!\!_mFileName!'"
+) ELSE (
+echo "Failed to send '!_mFileName!' to '!_mDirFileTo!\'"
+call :logger "Failed to send '!_mFileName!' to '!_mDirFileTo!\'"
+)
 EXIT /B 0
 
 rem output " The Rising of the Shield Hero - S01E001 " = "The Rising of the Shield Hero"
 :fileToFolderName
-set variable1=%~1
-set variable2=%~2
-for /f "tokens=1 delims=%variable2%" %%a in ("%variable1%") do (
+set fileName=%~1
+set character=%~2
+for /f "tokens=1 delims=%character%" %%a in ("%fileName%") do (
 call :trim "%%a", _folderName
 SET %~3=!_folderName!
 )
 endlocal
 EXIT /B 0
 
-:stringContains
-set variable1=%~1
-set variable2=%~2
-if not "x!variable1:%variable2%=!"=="x%variable1%" (
+:variableContains
+set fileName=%~1
+set character=%~2
+if not "x!fileName:%character%=!"=="x%fileName%" (
+rem = true
     SET %~3=0
 ) else (
+rem = false
     SET %~3=1
 )
 EXIT /B 0
@@ -175,12 +189,14 @@ SET %~2=%input%
 EXIT /B 0
 
 rem calls TinyMediaManager to update the plex server.
-:serverUpdate
+:tmmUpdate
+IF exist "%tmmDir%\tinyMediaManagerCMD.exe" (
 %drive1%
 cd %tmmDir%
 tinyMediaManagerCMD.exe -update -scrapeNew
 %drive2%
 cd %home%
+)
 EXIT /B 0
 
 :initLogger
@@ -198,7 +214,7 @@ EXIT /B 0
 
 :config
 if exist %utilsDir%\%configName% (
-echo %configName% exists....
+echo loading %configName%....
 >nul findstr "<" "%utilsDir%\%configName%" && (
 %utilsDir%\%configName%
 echo update the config file before continuing....
@@ -229,7 +245,7 @@ pause
 )
 EXIT /B 0
 
-:getLock
 :: The CALL will fail if another process already has a write lock on the script
+:getLock
 call :main 9>>"%~f0"
 exit /b
