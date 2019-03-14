@@ -4,20 +4,20 @@ title=Local2Server
 drive1=c:
 drive2=d:
 
-home="D:\Downloads\PLEX"
-tmmDir="C:\Program Files (x86)\TMM"
-localBackUp="D:\Downloads\PLEX\BackUp"
+home=D:\Downloads\PLEX
+tmmDir=C:\Program Files (x86)\TMM
+localBackUp=D:\Downloads\PLEX\BackUp
 
-tvL[0]="D:\Downloads\PLEX\Animes"
-tvS[0]="P:\Animes"
-tvL[1]="D:\Downloads\PLEX\AnimesH"
-tvS[1]="P:\AnimesH"
-tvL[2]="D:\Downloads\PLEX\TV"
-tvS[2]="P:\TV"
+tvL[0]=D:\Downloads\PLEX\Animes
+tvS[0]=P:\Animes"
+tvL[1]=D:\Downloads\PLEX\AnimesH
+tvS[1]=P:\AnimesH
+tvL[2]=D:\Downloads\PLEX\TV
+tvS[2]=P:\TV
 tvIndex=2
 
-movieL[0]="D:\Downloads\PLEX\Movies"
-movieS[0]="P:\Movies"
+movieL[0]=D:\Downloads\PLEX\Movies
+movieS[0]=P:\Movies
 movieIndex=0
 
 roboCopyMT=64
