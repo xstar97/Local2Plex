@@ -19,3 +19,7 @@ tvIndex=2
 movieL[0]="D:\Downloads\PLEX\Movies"
 movieS[0]="P:\Movies"
 movieIndex=0
+
+roboCopyMT=64
+roboCopyRetryCount=10
+roboCopyRetryWaitTime=15
