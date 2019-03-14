@@ -1,27 +1,25 @@
 @echo off
 setlocal EnableDelayedExpansion
+cls
 
+SET mypath=%~dp0
+set utilsDir=%mypath:~0,-1%\utils
 set configName=config.txt
 set logName=log.txt
-set utilsDir=%CD%\utils
-
 call :getLock
-exit /b
+EXIT /B 0
 
 ::function loads config file and loops though the specified dir(s) for both TV and Movies
-::additionally starts T.M.M to update the server with .nfo and other media files
+::additionally starts T.M.M to update the server with .nfo and other media files; optional.
 :main
-if not exist "%utilsDir%\" md "%utilsDir%\"
+if not exist "!utilsDir!\" md "!utilsDir!\"
 call :initLogger
 call :config
+for /f "delims=" %%x in (!utilsDir!\!configName!) do set "%%x"
 
-for /f "delims=" %%x in (%utilsDir%\%configName%) do set "%%x"
-
-IF %ERRORLEVEL% EQU 0 (
 TITLE %title%
 
 %drive2%
-
 for /l %%G in (0, 1, %tvIndex%) do (
 call :localPlexTvShows !tvL[%%G]!, !tvS[%%G]!
 )
@@ -34,61 +32,82 @@ call :tmmUpdate
 
 cd %home%
 pause
-) else (
-call :logger "exitCode= %ERRORLEVEL%"
-echo "exitCode= %ERRORLEVEL%"
-echo Sorry!, something happened here....
-pause
-)
-exit /b
+EXIT /B 0
 
 ::looks for any Shows on local storage and copies it over to the plex server.
 :localPlexTvShows
 set local=%~1
 set server=%~2
-
-echo "started function :localPlexTvShows - %local%."
-call :logger "started function localPlexTvShows - %local%."
+if exist "%local%" (
+echo "started function :localPlexTvShows"
+call :logger "started function localPlexTvShows - %local%"
 cd %local%
-
-echo "looking for files in %local%"
+call :colorizeVariable "%local%" 93, _resultLocal
+echo "looking for files in !_resultLocal!"
 call :logger "looking for files in %local%"
+
 for /r %%f in (*.mp4;*.mkv;*.avi) do (
 
 CALL :fileToFolderName "%%~nf", -, _resultFolderName
 CALL :getSeasonShowNumber "%%~nxf", ret_val2
 call :trim "!ret_val2!", _resultSeasonName
 
-echo "parsing %%f..."
+call :colorizeVariable "%%~nxf" 93, _resultFile
+echo "parsing !_resultFile!..."
 call :logger "parsing %%f..."
 
+if exist "%server%" (
 call :copyAndMoveFile "!server!\!_resultFolderName!\!_resultSeasonName!", "%%~df%%~pf\", "!localBackUp!", "!_resultFolderName!", "%%~nxf"
+) else (
+echo "server TV directory does not exist or has not been added yet in config!"
+call :logger "server TV directory does not exist or has not been added yet in config!"
 )
-echo "finished in %local%."
-call :logger "finished in %local%."
+)
+
+call :colorizeVariable "finished" 92, _resultFinished
+echo "!_resultFinished! in !_resultLocal!"
+call :logger "finished in %local%"
+) else ( 
+echo "local TV directory does not exist or has not been added yet in config!"
+call :logger "local TV directory does not exist or has not been added yet in config!"
+)
 EXIT /B 0
 
 ::looks for any movie on local storage and copies it over to the plex server.
 :localPlexMovies
 set local=%~1
 set server=%~2
-echo "started function :localPlexMovies - %local%"
+if exist "%local%" (
+echo "started function :localPlexMovies"
 call :logger "started function :localPlexMovies - %local%"
 cd %local%
-echo "looking for files in %local%"
+call :colorizeVariable "%local%" 93, _resultLocal
+echo "looking for files in !_resultLocal!"
 call :logger "looking for files in %local%"
 for /r %%f in (*.mp4;*.mkv;*.avi) do (
 
-echo "parsing %%~nxf"
+call :colorizeVariable "%%~nxf" 93, _resultFile
+echo "parsing !_resultFile!..."
 call :logger "parsing %%~nxf"
 
 call :trim "%%~nf", _folderName
 set folderName=!_folderName!
 
+if exist "%server%" (
 call :copyAndMoveFile "!server!\!folderName!", "%%~df%%~pf\", %localBackUp%, "!folderName!", "%%~nxf"
+) else (
+echo "server MOVIE directory does not exist or has not been added yet in config!"
+call :logger "server MOVIE directory does not exist or has not been added yet in config!"
 )
-echo "finished in %local%."
-call :logger "finished in %local%."
+)
+call :colorizeVariable "finished" 92, _resultFinished
+call :colorizeVariable "%local%" 93, _resultLocal
+echo "!_resultFinished! in !_resultLocal!"
+call :logger "finished in %local%"
+) else ( 
+echo "local MOVIE directory does not exist or has not been added yet in config!"
+call :logger "local MOVIE directory does not exist or has not been added yet in config!"
+)
 EXIT /B 0
 
 ::function to copy to the plex server and move the original file to backup.
@@ -107,7 +126,13 @@ call :moveFile "%_serverDir%", "%_localBackUpDir%\Server\%_folderName%\", "%_fil
 )
 rem local
 call :copyFile "!_localDir!", "!_serverDir!", "!_fileName!"
+
+IF %ERRORLEVEL% EQU 0 (
 call :moveFile "%_localDir%", "%_localBackUpDir%\Local\%_folderName%\", "%_fileName%"
+) else (
+call :logger "exitCode= %ERRORLEVEL%"
+echo check "%utilsDir%\%configName%" for errors.
+)
 EXIT /B 0
 
 ::function to copy file from one location to another
@@ -121,7 +146,7 @@ call :logger "copying '%_mFileName%' from '%_mDirFileFrom%' to '%_mDirFileTo%'"
 robocopy "%_mDirFileFrom%" "%_mDirFileTo%" "%_mFileName%" /MT:%roboCopyMT% /R:%roboCopyRetryCount% /W:%roboCopyRetryWaitTime% /J /V
 
 IF %ERRORLEVEL% EQU 1 (
-call :logger "copied from '%_mDirFileFrom%\!_mFileName!' to '%_mDirFileTo%\!_mFileName!'"
+call :logger "copied from '%_mDirFileFrom%!_mFileName!' to '%_mDirFileTo%\!_mFileName!'"
 ) ELSE (
 call :logger "exitCode= %ERRORLEVEL%"
 call :logger "Copied failed...from '!_mFileName!' to '%_mDirFileTo%'."
@@ -134,7 +159,7 @@ set _mDirFileFrom=%~1
 set _mDirFileTo=%~2
 set _mFileName=%~3
 
-call :logger "moving '!_mFileName!' from '%_mDirFileFrom%\' to '%_mDirFileTo%\"
+call :logger "moving '!_mFileName!' from '%_mDirFileFrom%' to '%_mDirFileTo%"
 
 robocopy "%_mDirFileFrom%" "%_mDirFileTo%\" "%_mFileName%" /MT:%roboCopyMT% /R:%roboCopyRetryCount% /W:%roboCopyRetryWaitTime% /J /V /mov
 
@@ -172,6 +197,15 @@ if not "x!fileName:%character%=!"=="x%fileName%" (
 )
 EXIT /B 0
 
+::function to add some color to my script!
+::92 = green
+::93 = yellow
+::91 = red
+:colorizeVariable
+set variable1=%~1
+set colorN=%~2
+set %~3=[!colorN!m!variable1![0m
+exit /b
 
 ::call :getSeasonShowNumber "The Rising of the Shield Hero - S01E001.mp4", result
 ::call :getSeasonShowNumber "The Rising of the Shield Hero - S00E001.mp4", result2
@@ -226,21 +260,32 @@ EXIT /B 0
 ::if config does not exist; it will create a config.txt in the utils\ dir and launch it before
 ::excuting the :main fuction
 :config
-if exist %utilsDir%\%configName% (
-echo loading %configName%....
+
+if exist "%utilsDir%\%configName%" (
+
+call :colorizeVariable "exists!" 92, _resultExists
+echo "%configName% !_resultExists!"
+call :logger "%configName% exists!"
+
 >nul findstr "<" "%utilsDir%\%configName%" && (
 %utilsDir%\%configName%
-echo update the config file before continuing....
+call :colorizeVariable "%configName%" 91, _resultName
+echo update !_resultName! before continuing....
 pause
 )
 ) else (
+call :configCreator
+)
+EXIT /B 0
+
+:configCreator
 (
 echo title=Local2Server
 echo.
 echo drive1="<c drive>"
 echo drive2="<d drive>"
 echo.
-echo home="<"%CD%">"
+echo home=%mypath:~0,-1%
 echo tmmDir="<folder location of Tiny Media Manager>"
 echo localBackUp="<folder to moved copied files to>"
 echo.
@@ -255,12 +300,15 @@ echo.
 echo roboCopyMT="<8-128>"
 echo roboCopyRetryCount="<1-10000000>"
 echo roboCopyRetryWaitTime="<X in seconds>"
-) > %utilsDir%\%configName%
+) > "%utilsDir%\%configName%"
 %utilsDir%\%configName%
+call :colorizeVariable "ILL" 93, _resultILL
+echo "%configName% is !_resultILL!"
 echo update the config file before continuing....
+echo if config file has not been edited...this script will exit.
 pause
-)
 EXIT /B 0
+
 
 :: The CALL will fail if another process already has a write lock on the script
 :getLock
