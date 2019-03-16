@@ -318,10 +318,12 @@ echo.
 echo tvL[0]="<Local TV folder 1>"
 echo tvS[0]="<Server TV folder 1>"
 echo tvIndex="<TV index 0>"
+echo videoFilterTV=*.mp4;*.mkv;*.avi
 echo.
 echo movieL[0]="<Local Movie folder 1>"
 echo movieS[0]="<Server Movie folder 1>"
 echo movieIndex="<Movie index 0>"
+echo videoFilterMovie=*.mp4;*.mkv;*.avi
 echo.
 echo roboCopyMT="<8-128>"
 echo roboCopyRetryCount="<1-10000000>"
