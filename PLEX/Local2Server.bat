@@ -2,10 +2,18 @@
 setlocal EnableDelayedExpansion
 cls
 
+:: path where batch script is located
 SET mypath=%~dp0
+::utils dir
 set utilsDir=%mypath:~0,-1%\utils
+::name of config file
 set configName=config.txt
+::name of log file
 set logName=log.txt
+::"boolean" to start TMM if any changes were made; any files copied to the server.
+set startTMM=1
+
+::starts script
 call :getLock
 EXIT /B 0
 
@@ -13,21 +21,29 @@ EXIT /B 0
 ::additionally starts T.M.M to update the server with .nfo and other media files; optional.
 :main
 if not exist "!utilsDir!\" md "!utilsDir!\"
+
 call :initLogger
 call :config
+
+::method loads config and sets all the variables for the script
 for /f "delims=" %%x in (!utilsDir!\!configName!) do set "%%x"
 
+::this hacks your zoom
 TITLE %title%
 
+::in order to cd from different drives....this switches to the drive letter first.
 %drive2%
+::loops through the main dirs/sub dir for files
 for /l %%G in (0, 1, %tvIndex%) do (
 call :localPlexTvShows !tvL[%%G]!, !tvS[%%G]!
 )
 
+::loops through the main dirs/sub dir for files
 for /l %%G in (0, 1, %movieIndex%) do (
 call :localPlexMovies !movieL[%%G]!, !movieS[%%G]!
 )
 
+::starts T.M.M to update the server
 call :tmmUpdate
 
 cd %home%
@@ -45,8 +61,9 @@ cd %local%
 call :colorizeVariable "%local%" 93, _resultLocal
 echo "looking for files in !_resultLocal!"
 call :logger "looking for files in %local%"
-
-for /r %%f in (*.mp4;*.mkv;*.avi) do (
+if "!videoFilterTV!"=="" ( set videoFilterTV=*.mp4;*.mkv;*.avi
+)
+for /r %%f in (!videoFilterTV!) do (
 
 CALL :fileToFolderName "%%~nf", -, _resultFolderName
 CALL :getSeasonShowNumber "%%~nxf", ret_val2
@@ -84,8 +101,10 @@ cd %local%
 call :colorizeVariable "%local%" 93, _resultLocal
 echo "looking for files in !_resultLocal!"
 call :logger "looking for files in %local%"
-for /r %%f in (*.mp4;*.mkv;*.avi) do (
+if "!videoFilterMovie!"=="" ( set videoFilterMovie=*.mp4;*.mkv;*.avi
+)
 
+for /r %%f in (!videoFilterMovie!) do (
 call :colorizeVariable "%%~nxf" 93, _resultFile
 echo "parsing !_resultFile!..."
 call :logger "parsing %%~nxf"
@@ -147,6 +166,7 @@ robocopy "%_mDirFileFrom%" "%_mDirFileTo%" "%_mFileName%" /MT:%roboCopyMT% /R:%r
 
 IF %ERRORLEVEL% EQU 1 (
 call :logger "copied from '%_mDirFileFrom%!_mFileName!' to '%_mDirFileTo%\!_mFileName!'"
+set startTMM=0
 ) ELSE (
 call :logger "exitCode= %ERRORLEVEL%"
 call :logger "Copied failed...from '!_mFileName!' to '%_mDirFileTo%'."
@@ -234,11 +254,17 @@ EXIT /B 0
 ::calls TinyMediaManager to update the plex server.
 :tmmUpdate
 IF exist "!tmmDir!\tinyMediaManagerCMD.exe" (
+if "%startTMM%"=="0" (
 %drive1%
 cd !tmmDir!
 tinyMediaManagerCMD.exe -update -scrapeNew
 %drive2%
 cd %home%
+set startTMM=1
+) else (
+echo "No files were copied to the server, no need to start T.M.M"
+call :logger "No files were copied to the server, no need to start T.M.M"
+)
 )
 EXIT /B 0
 
@@ -308,7 +334,6 @@ echo update the config file before continuing....
 echo if config file has not been edited...this script will exit.
 pause
 EXIT /B 0
-
 
 :: The CALL will fail if another process already has a write lock on the script
 :getLock
