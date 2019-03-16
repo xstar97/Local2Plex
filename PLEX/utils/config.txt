@@ -9,16 +9,18 @@ tmmDir=C:\Program Files (x86)\TMM
 localBackUp=D:\Downloads\PLEX\BackUp
 
 tvL[0]=D:\Downloads\PLEX\Animes
-tvS[0]=P:\Animes"
+tvS[0]=P:\Animes
 tvL[1]=D:\Downloads\PLEX\AnimesH
 tvS[1]=P:\AnimesH
 tvL[2]=D:\Downloads\PLEX\TV
 tvS[2]=P:\TV
 tvIndex=2
+videoFilterTV=*.mp4;*.mkv;*.avi
 
 movieL[0]=D:\Downloads\PLEX\Movies
 movieS[0]=P:\Movies
 movieIndex=0
+videoFilterMovie=*.mp4;*.mkv;*.avi
 
 roboCopyMT=64
 roboCopyRetryCount=10
